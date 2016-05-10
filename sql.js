@@ -1,27 +1,42 @@
-var operators = ['(', ')', '&', '|', '!', '=', '>', '<'];
+// var operators = ['(', ')', '&', '|', '!', '=', '>', '<'];
+var operators = ['(', ')', '&', '|'];
 
-var testSQL = 'AAA&(B |C ) ||D&(E|F&G)';
+// var testSQL = 'a>3&&&&&&&&(b>4 ||||b<2) ||c==5&&&&(d!=4|e>=1&&&&e<=6)';
+var testSQL = 'A&&&&&&&&(B ||||C) ||D&&&&(E|F&&&&G)';
+// console.log('test input:' + testSQL);
+
+String.prototype.replaceAll = function(sub, str) {
+	// body...
+	var result = this;
+	while (result.indexOf(sub) !== -1) {
+		// statement
+		result = result.replace(sub, str);
+	}
+	return result;
+};
 
 //处理DIY语句
-var sql = testSQL.replace(/&+/, '&').replace(/\|+/, '|').replace(/=+/, '=');
+var sql = testSQL.replaceAll('&&', '&').replaceAll('||', '|'); //.replaceAll('==', '=');
+
 var chr;
 var sent = '';
-var list = [];
+var listF = [];
 for (var i = 0; i < sql.length; i++) {
 	if (sql.charAt(i) !== ' ') {
 		chr = sql.charAt(i)
 		if (operators.indexOf(chr) !== -1) {
 			if (sent !== '') {
-				list.push(sent);
+				listF.push(sent);
 				sent = '';
 			}
-			list.push(chr);
+			listF.push(chr);
 		} else {
 			sent += chr;
 		}
 	}
 }
 
+//从前序回归树形结构
 var node = function() {
 	return {
 		key: 0,
@@ -32,80 +47,139 @@ var node = function() {
 	}
 };
 
-console.log(list);
+console.log(listF);
 
 var val;
 var tempNode;
-var stack = [];
 var tempStack = [];
-var temp = [];
-var rootNode;
-var leftNode;
-var rightNode;
-var num = 0;
 
 var createTree = function(list) {
-
+	var rootNode;
+	var barcketStack = [];
 	while (0 < list.length) {
 		val = list.shift();
-		console.log(val);
-
-
-
-		temp = [];
-
+		tempNode = node();
+		tempNode['key'] = tempStack.length + 1;
 		if (val === '(') {
-			val = list.shift();
-			while (val !== ')') {
-				temp.push(val);
-				val = list.shift();
+			var rightNode = solveBracket(list);
+			if (rightNode) {
+				rootNode['right'] = rightNode['key'];
+				rightNode['parent'] = rootNode['key'];
 			}
-			tempStack.push(createTree(temp));
+			continue;
 		} else if (val === '&' || val === '|') {
-			tempNode = node();
-			tempNode['key'] = num++;
-			rootNode = tempNode;
-			rootNode.value = val;
-			leftNode = tempStack.pop();
-			leftNode.parent = rootNode['key'];
-			rootNode.left = leftNode['key'];
-			val = list.shift();
-			if (val === '(') {
-				val = list.shift();
-				while (val !== ')') {
-					temp.push(val);
-					val = list.shift();
-				}
-				rightNode = createTree(temp);
-				rightNode.parent = rootNode['key'];
-				tempStack.push(rootNode);
-				rootNode.right = rightNode['key'];
-			} else {
-				console.log(val);
-				rightNode = node();
-				rightNode.value = val;
-				rightNode.parent = rootNode['key'];
-				rootNode.right = rightNode['key'];
-				tempStack.push(rootNode);
+			var leftNode = rootNode;
+			if (leftNode) {
+				tempNode['value'] = val;
+				tempNode['left'] = leftNode['key']
+				leftNode['parent'] = tempNode['key'];
+				rootNode = tempNode;
 			}
 		} else {
-			tempNode = node();
-			tempNode['key'] = num++;
-			tempNode['value'] = val;
-			tempStack.push(tempNode);
+			if (barcketStack.length > 0) {
+				tempNode['parent'] = barcketStack[barcketStack.length - 1]['key']
+				barcketStack[barcketStack.length - 1]['right'] = tempNode['key'];
+				tempNode['value'] = val;
+			} else {
+				rootNode = tempNode;
+				tempNode['value'] = val;
+			}
 		}
-
-		console.log(tempStack);
+		tempStack.push(tempNode);
+		barcketStack.push(tempNode);
 
 	}
 	return rootNode;
 }
 
+var findRoot = function(list) {
+	for (var i = 0; i < list.length; i++) {
+		if (list[i]['parent'] === 0) {
+			return list[i];
+		}
+	}
+	return false;
+}
+
+var solveBracket = function(list) {
+	var temp = [];
+
+	val = list.shift();
+	while (val !== ')') {
+		if (val === '(') {
+			solveBracket(list);
+		}
+		temp.push(val);
+		val = list.shift();
+	}
+	return createTree(temp);
+}
 
 
-var result = createTree(list);
 
-console.log(result);
+var result = createTree(listF);
+
+// console.log('root is ');
+// console.log(result);
+// console.log(tempStack);
+
+//中序遍历树结构 
+var BList = [];
+
+var searchLeft = function(rNode) {
+	if (rNode['left'] !== 0) {
+		readTree(tempStack[rNode['left'] - 1]);
+	}
+}
+
+var searchRight = function(rNode) {
+	if (rNode['right'] !== 0) {
+		readTree(tempStack[rNode['right'] - 1]);
+	}
+}
+
+var addSelf = function(rNode) {
+	BList.push(rNode);
+}
+
+var readTree = function(rootB) {
+	console.log(rootB);
+	addSelf(rootB);
+	searchLeft(rootB);
+	searchRight(rootB);
+
+}
+
+readTree(result);
+
+console.log(BList);
+
+
+
+var excuteSQL = function(sql) {
+	console.log(sql);
+}
+var stack = [];
+var sentsNum = 0;
+var conn = '';
+var results = [];
+while (BList.length > 0) {
+	// statement
+	stack.push(BList.shift()['value']);
+
+	if (stack[stack.length - 1] !== '&' && stack[stack.length - 1] !== '|') {
+		sentsNum++;
+		if (sentsNum === 2) {
+			var result1 = excuteSQL(stack.pop());
+			var result2 = excuteSQL(stack.pop());
+			conn = stack.pop();
+			stack.push(connResult(result1, result2, conn));
+			sentsNum = 0;
+		}
+
+	}
+}
+
 
 
 return;
