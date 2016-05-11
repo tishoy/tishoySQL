@@ -152,56 +152,53 @@ var readTree = function(rootB) {
 
 readTree(result);
 
-console.log(BList);
+// console.log(BList);
 
-
+var numResult;
+var connResult = function(res1, res2, con) {
+	return '(' + res1 + con + res2 + ')';
+}
 
 var excuteSQL = function(sql) {
-	console.log(sql);
+	console.log("excute:" + sql);
+	return "excute:" + sql;
 }
+
 var stack = [];
 var sentsNum = 0;
 var conn = '';
 var results = [];
-while (BList.length > 0) {
-	// statement
-	stack.push(BList.shift()['value']);
+var result;
 
+var check = function () {
+	if (stack.length < 1) {
+		return result;
+	}
 	if (stack[stack.length - 1] !== '&' && stack[stack.length - 1] !== '|') {
-		sentsNum++;
-		if (sentsNum === 2) {
-			var result1 = excuteSQL(stack.pop());
-			var result2 = excuteSQL(stack.pop());
-			conn = stack.pop();
-			stack.push(connResult(result1, result2, conn));
-			sentsNum = 0;
-		}
-
+		var result0 = excuteSQL(result);
+		var result1 = excuteSQL(stack.pop());
+		conn = stack.pop();
+		result = connResult(result1, result0, conn);
+	} else {
+		return result;
 	}
+	return check();
 }
 
-
-
-return;
-
-
-stack.push(result['value']);
-console.log(result['key']);
-
-var loopTrace = function(node) {
-	if (result['left'] !== 0) {
-		stack.push(tree[result['left']['value']]);
-		console.log(tree[result['left']['key']]);
-		loopTrace(tree[result['key']]);
+while (BList.length > 0 || stack.length > 1) {
+	// statement
+	
+	result = BList.shift()['value']
+	
+	if (result !== '&' && result !== '|') {
+		result = check(); 
 	}
-
-	if (result['right'] !== 0) {
-		stack.push(tree[result['right']['value']]);
-		console.log(tree[result['right']['key']]);
-		loopTrace(tree[result['key']]);
-	}
+	stack.push(result);
+	
+	console.log(stack);
 }
 
-loopTrace(result);
 
 console.log(stack);
+
+return;
