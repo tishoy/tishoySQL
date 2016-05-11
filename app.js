@@ -2,7 +2,7 @@
 var operators = ['(', ')', '&', '|'];
 
 // var testSQL = 'a>3&&&&&&&&(b>4 ||||b<2) ||c==5&&&&(d!=4|e>=1&&&&e<=6)';
-var testSQL = 'A&&&&&&&&(B ||||C) ||D&&&&(E|F&&&&G)';
+var testSQL = 'A&(B ||C) & I||H & D & L& (E|F&J&G)|K';
 // console.log('test input:' + testSQL);
 
 String.prototype.replaceAll = function(sub, str) {
@@ -17,10 +17,12 @@ String.prototype.replaceAll = function(sub, str) {
 
 //处理DIY语句
 var sql = testSQL.replaceAll('&&', '&').replaceAll('||', '|'); //.replaceAll('==', '=');
+console.log(sql);
 
 var chr;
 var sent = '';
 var listF = [];
+
 for (var i = 0; i < sql.length; i++) {
 	if (sql.charAt(i) !== ' ') {
 		chr = sql.charAt(i)
@@ -34,6 +36,9 @@ for (var i = 0; i < sql.length; i++) {
 			sent += chr;
 		}
 	}
+}
+if (sent !== '') {
+	listF.push(sent);
 }
 
 //从前序回归树形结构
@@ -119,8 +124,8 @@ var solveBracket = function(list) {
 
 var result = createTree(listF);
 
-// console.log('root is ');
-// console.log(result);
+console.log('root is ');
+console.log(result);
 // console.log(tempStack);
 
 //中序遍历树结构 
