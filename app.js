@@ -1,7 +1,7 @@
 // var operators = ['(', ')', '&', '|', '!', '=', '>', '<'];
 var operators = ['(', ')', '&', '|'];
 
-var testSQL = 'dia>3&&&&&&&&(dia<30 &&dia<10)';
+var testSQL = 'dia>3&&&&&&&&(dia<30 &&dia<10)||dia<25';
 // var testSQL = 'A&(B ||C) & I||H & D & L& (E|F&J&G)|K';
 // console.log('test input:' + testSQL);
 
@@ -265,9 +265,11 @@ var check = function () {
 	if (stack.length < 1) {
 		return result;
 	}
+	var table = testTable;
 	if (stack[stack.length - 1] !== '&' && stack[stack.length - 1] !== '|') {
-		var result0 = typeof(result) === 'string'?execute(result, testTable):result;
-		var result1 = execute(stack.pop(), testTable);
+		var result0 = typeof(result) === 'string'?execute(result, table):result;
+		var popResult = stack.pop();
+		var result1 = typeof(popResult) === 'string'?execute(popResult, table):popResult; 
 		conn = stack.pop();
 		result = connResult(result1, result0, conn);
 	} else {
