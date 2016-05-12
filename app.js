@@ -16,32 +16,34 @@ String.prototype.replaceAll = function(sub, str) {
 };
 
 //处理DIY语句
-var sql = testSQL.replaceAll('&&', '&').replaceAll('||', '|'); //.replaceAll('==', '=');
-console.log(sql);
+var sqlInput = testSQL.replaceAll('&&', '&').replaceAll('||', '|'); //.replaceAll('==', '=');
+console.log(sqlInput);
 
-var chr;
-var sent = '';
-var listF = [];
+var inputChar;
+var sentence = '';
+var listFrontSort = [];
 
-for (var i = 0; i < sql.length; i++) {
-	if (sql.charAt(i) !== ' ') {
-		chr = sql.charAt(i)
-		if (operators.indexOf(chr) !== -1) {
-			if (sent !== '') {
-				listF.push(sent);
-				sent = '';
+for (var i = 0; i < sqlInput.length; i++) {
+	if (sqlInput.charAt(i) !== ' ') {
+		inputChar = sqlInput.charAt(i)
+		if (operators.indexOf(inputChar) !== -1) {
+			if (sentence !== '') {
+				listFrontSort.push(sentence);
+				sentence = '';
 			}
-			listF.push(chr);
+			listFrontSort.push(inputChar);
 		} else {
-			sent += chr;
+			sentence += inputChar;
 		}
 	}
 }
-if (sent !== '') {
-	listF.push(sent);
+if (sentence !== '') {
+	listFrontSort.push(sentence);
 }
 
-//从前序回归树形结构
+//从前序回归树形结构 
+
+//结点
 var node = function() {
 	return {
 		key: 0,
@@ -52,9 +54,9 @@ var node = function() {
 	}
 };
 
-console.log(listF);
+console.log(listFrontSort);
 
-var val;
+var char;
 var tempNode;
 var tempStack = [];
 
@@ -62,20 +64,20 @@ var createTree = function(list) {
 	var rootNode;
 	var barcketStack = [];
 	while (0 < list.length) {
-		val = list.shift();
+		char = list.shift();
 		tempNode = node();
 		tempNode['key'] = tempStack.length + 1;
-		if (val === '(') {
+		if (char === '(') {
 			var rightNode = solveBracket(list);
 			if (rightNode) {
 				rootNode['right'] = rightNode['key'];
 				rightNode['parent'] = rootNode['key'];
 			}
 			continue;
-		} else if (val === '&' || val === '|') {
+		} else if (char === '&' || char === '|') {
 			var leftNode = rootNode;
 			if (leftNode) {
-				tempNode['value'] = val;
+				tempNode['value'] = char;
 				tempNode['left'] = leftNode['key']
 				leftNode['parent'] = tempNode['key'];
 				rootNode = tempNode;
@@ -84,10 +86,10 @@ var createTree = function(list) {
 			if (barcketStack.length > 0) {
 				tempNode['parent'] = barcketStack[barcketStack.length - 1]['key']
 				barcketStack[barcketStack.length - 1]['right'] = tempNode['key'];
-				tempNode['value'] = val;
+				tempNode['value'] = char;
 			} else {
 				rootNode = tempNode;
-				tempNode['value'] = val;
+				tempNode['value'] = char;
 			}
 		}
 		tempStack.push(tempNode);
@@ -109,20 +111,18 @@ var findRoot = function(list) {
 var solveBracket = function(list) {
 	var temp = [];
 
-	val = list.shift();
-	while (val !== ')') {
-		if (val === '(') {
+	char = list.shift();
+	while (char !== ')') {
+		if (char === '(') {
 			solveBracket(list);
 		}
-		temp.push(val);
-		val = list.shift();
+		temp.push(char);
+		char = list.shift();
 	}
 	return createTree(temp);
 }
 
-
-
-var result = createTree(listF);
+var result = createTree(listFrontSort);
 
 console.log('root is ');
 console.log(result);
@@ -156,8 +156,6 @@ var readTree = function(rootB) {
 }
 
 readTree(result);
-
-// console.log(BList);
 
 var numResult;
 var connResult = function(res1, res2, con) {
