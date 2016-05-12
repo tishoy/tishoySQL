@@ -18,7 +18,6 @@ var testTable = {
     }
 };
 
-var char;
 var symb;
 var las;
 
@@ -60,7 +59,6 @@ var execute = function (sql, table) {
         // console.log(sql.slice(1, sql.length));
         return findLow(las.slice(1, sql.length - 1), table);
     }
-
 }
 
 var orAction = function (a, b) {

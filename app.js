@@ -1,8 +1,8 @@
 // var operators = ['(', ')', '&', '|', '!', '=', '>', '<'];
 var operators = ['(', ')', '&', '|'];
 
-// var testSQL = 'a>3&&&&&&&&(b>4 ||||b<2) ||c==5&&&&(d!=4|e>=1&&&&e<=6)';
-var testSQL = 'A&(B ||C) & I||H & D & L& (E|F&J&G)|K';
+var testSQL = 'dia>3&&&&&&&&(dia<30 &&dia<10)';
+// var testSQL = 'A&(B ||C) & I||H & D & L& (E|F&J&G)|K';
 // console.log('test input:' + testSQL);
 
 String.prototype.replaceAll = function(sub, str) {
@@ -157,14 +157,102 @@ var readTree = function(rootB) {
 
 readTree(result);
 
-var numResult;
-var connResult = function(res1, res2, con) {
-	return '(' + res1 + con + res2 + ')';
+
+
+
+
+//最后执行语句
+
+var testTable = {
+    A: {
+        diamond: 40
+    }, B: {
+        diamond: 30
+    }, C: {
+        diamond: 20
+    }, D: {
+        diamond: 10
+    }, E: {
+        diamond: 5
+    }, F: {
+        diamond: 3
+    }, G: {
+        diamond: 1
+    }
+};
+
+
+var symb;
+var las;
+
+var findHigh = function (num, table) {
+    var result = {};
+    for (var k in table) {
+        if (table[k]['diamond'] > num) {
+            // console.log(k);
+            result[k] = {};
+            result[k]['diamond'] = table[k]['diamond'];
+        }
+    }
+    return result;
 }
 
-var excuteSQL = function(sql) {
-	console.log("excute:" + sql);
-	return "excute:" + sql;
+var findLow = function (num, table) {
+    var result = {};
+    for (var k in table) {
+        if (table[k]['diamond'] < num) {
+            result[k] = {};
+            result[k]['diamond'] = table[k]['diamond'];
+        }
+    }
+    return result;
+}
+
+var execute = function (sql, table) {
+
+    if (sql.indexOf('dia') !== -1) {
+        las = sql.replace('dia', '');
+        symb = sql.replace('dia', '').charAt(0);
+    }
+    // console.log(las);
+    if (symb === '>') {
+        // console.log(las.slice(1, sql.length - 1));
+        return findHigh(las.slice(1, sql.length - 1), table);
+    }
+    if (symb === '<') {
+        // console.log(sql.slice(1, sql.length));
+        return findLow(las.slice(1, sql.length - 1), table);
+    }
+}
+
+var connResult = function(res1, res2, con) {
+	if (con === '|') {
+		return orAction(res1, res2);
+	} else if (con === '&') {
+		return andAction(res1, res2);
+	}
+}
+
+
+var orAction = function (a, b) {
+    var result = b;
+    for (var k in a) {
+        if (b[k] === undefined) {
+            result[k] = a[k];
+        }
+    }
+    return result;
+}
+
+var andAction = function (a, b) {
+    var result = a;
+    for (var k in a) {
+        // console.log(b[k]);
+        if (b[k] === undefined) {
+            delete (result[k]);
+        }
+    }
+    return result;
 }
 
 var stack = [];
@@ -178,8 +266,8 @@ var check = function () {
 		return result;
 	}
 	if (stack[stack.length - 1] !== '&' && stack[stack.length - 1] !== '|') {
-		var result0 = excuteSQL(result);
-		var result1 = excuteSQL(stack.pop());
+		var result0 = typeof(result) === 'string'?execute(result, testTable):result;
+		var result1 = execute(stack.pop(), testTable);
 		conn = stack.pop();
 		result = connResult(result1, result0, conn);
 	} else {
