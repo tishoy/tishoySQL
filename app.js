@@ -2,6 +2,26 @@
 var operators = ['(', ')', '&', '|'];
 
 var testSQL = 'dia>3&&&&&&&&(dia<30 &&dia<10)||dia<25';
+
+//查询表
+
+var testTable = {
+    A: {
+        diamond: 40
+    }, B: {
+        diamond: 30
+    }, C: {
+        diamond: 20
+    }, D: {
+        diamond: 10
+    }, E: {
+        diamond: 5
+    }, F: {
+        diamond: 3
+    }, G: {
+        diamond: 1
+    }
+};
 // var testSQL = 'A&(B ||C) & I||H & D & L& (E|F&J&G)|K';
 // console.log('test input:' + testSQL);
 
@@ -15,34 +35,48 @@ String.prototype.replaceAll = function(sub, str) {
 	return result;
 };
 
-//处理DIY语句
+//-------------------------------处理DIY语句
 var sqlInput = testSQL.replaceAll('&&', '&').replaceAll('||', '|'); //.replaceAll('==', '=');
 console.log(sqlInput);
 
 var inputChar;
 var sentence = '';
-var listFrontSort = [];
-
+var DLRSort = [];
+var sentenceNum = 0;
+var operateorsNum = 0;
 for (var i = 0; i < sqlInput.length; i++) {
 	if (sqlInput.charAt(i) !== ' ') {
 		inputChar = sqlInput.charAt(i)
 		if (operators.indexOf(inputChar) !== -1) {
 			if (sentence !== '') {
-				listFrontSort.push(sentence);
+				DLRSort.push(sentence);
 				sentence = '';
+				sentenceNum++;
 			}
-			listFrontSort.push(inputChar);
+			DLRSort.push(inputChar);
+			if (inputChar === '&' || inputChar === '|') {
+				operateorsNum++;
+			}
 		} else {
 			sentence += inputChar;
 		}
 	}
 }
+
 if (sentence !== '') {
-	listFrontSort.push(sentence);
+	DLRSort.push(sentence);
+	sentenceNum++;
 }
 
-//从前序回归树形结构 
+console.log(operateorsNum);
+console.log(sentenceNum);
 
+if (sentenceNum - 1 !== operateorsNum) {
+	console.log('输入字符串公式错误');
+	return;
+}
+
+//---------------------------从前序回归树形结构----------------------------------
 //结点
 var node = function() {
 	return {
@@ -54,7 +88,7 @@ var node = function() {
 	}
 };
 
-console.log(listFrontSort);
+console.log(DLRSort);
 
 var char;
 var tempNode;
@@ -122,14 +156,15 @@ var solveBracket = function(list) {
 	return createTree(temp);
 }
 
-var result = createTree(listFrontSort);
+var result = createTree(DLRSort);
 
 console.log('root is ');
 console.log(result);
 // console.log(tempStack);
 
-//中序遍历树结构 
-var BList = [];
+
+//---------------------------中序遍历树结构---------------------------------- 
+var LDRTree = [];
 
 var searchLeft = function(rNode) {
 	if (rNode['left'] !== 0) {
@@ -144,7 +179,7 @@ var searchRight = function(rNode) {
 }
 
 var addSelf = function(rNode) {
-	BList.push(rNode);
+	LDRTree.push(rNode);
 }
 
 var readTree = function(rootB) {
@@ -157,33 +192,7 @@ var readTree = function(rootB) {
 
 readTree(result);
 
-
-
-
-
-//最后执行语句
-
-var testTable = {
-    A: {
-        diamond: 40
-    }, B: {
-        diamond: 30
-    }, C: {
-        diamond: 20
-    }, D: {
-        diamond: 10
-    }, E: {
-        diamond: 5
-    }, F: {
-        diamond: 3
-    }, G: {
-        diamond: 1
-    }
-};
-
-
-var symb;
-var las;
+//-----------------------------执行SQL语句----------------------------------
 
 var findHigh = function (num, table) {
     var result = {};
@@ -208,20 +217,21 @@ var findLow = function (num, table) {
     return result;
 }
 
+var symbal;
+var left;
 var execute = function (sql, table) {
-
     if (sql.indexOf('dia') !== -1) {
-        las = sql.replace('dia', '');
-        symb = sql.replace('dia', '').charAt(0);
+        left = sql.replace('dia', '');
+        symbal = sql.replace('dia', '').charAt(0);
     }
     // console.log(las);
-    if (symb === '>') {
+    if (symbal === '>') {
         // console.log(las.slice(1, sql.length - 1));
-        return findHigh(las.slice(1, sql.length - 1), table);
+        return findHigh(left.slice(1, sql.length - 1), table);
     }
-    if (symb === '<') {
+    if (symbal === '<') {
         // console.log(sql.slice(1, sql.length));
-        return findLow(las.slice(1, sql.length - 1), table);
+        return findLow(left.slice(1, sql.length - 1), table);
     }
 }
 
@@ -258,7 +268,6 @@ var andAction = function (a, b) {
 var stack = [];
 var sentsNum = 0;
 var conn = '';
-var results = [];
 var result;
 
 var check = function () {
@@ -278,10 +287,10 @@ var check = function () {
 	return check();
 }
 
-while (BList.length > 0 || stack.length > 1) {
+while (LDRTree.length > 0 || stack.length > 1) {
 	// statement
 	
-	result = BList.shift()['value']
+	result = LDRTree.shift()['value']
 	
 	if (result !== '&' && result !== '|') {
 		result = check(); 
